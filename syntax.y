@@ -9,24 +9,28 @@ int yywrap(){
 
 int yyerror()
 {
-  printf("\n syntax error !");
+  extern int yylineno;
+  extern char* yytext;
+  printf("\nWARNING(Line : %d): Syntax Error . Character \'%s\'!!!!\n", yylineno,yytext);
   exit(1);
 }
 
 %}   
 
-%token   begin end FORWARD RIGHT LEFT REPEAT VALUE BLUE GREEN RED TRANSPARENT BLACK BACKGROUND DEFINECOLOR THICKNESS HEXA DEFFONCTION USEFONCTION
+%token   begin end FORWARD RIGHT LEFT REPEAT ELLIPSE CIRCLE RECT WRITE URL NAME TEXT VALUE ICON YELLOW BLUE GREEN RED TRANSPARENT BLACK BACKGROUND DEFINECOLOR THICKNESS HEXA DEFFONCTION USEFONCTION
 
 
 %union {
     NODE* NODE_TYPE;
     int val;
+    char* text;
     
  };
 
-%type <NODE_TYPE> begin end FORWARD RIGHT LEFT REPEAT BLUE GREEN RED TRANSPARENT BLACK DEFINECOLOR BACKGROUND THICKNESS DEFFONCTION USEFONCTION
-%type <NODE_TYPE> PROGRAM INSTRUCTION COLOR
-%type  <val> EXPRESSION VALUE TERM FACTOR HEXA
+%type <NODE_TYPE> begin end FORWARD RIGHT LEFT ELLIPSE CIRCLE RECT WRITE REPEAT URL ICON BLUE YELLOW GREEN RED TRANSPARENT BLACK DEFINECOLOR BACKGROUND THICKNESS DEFFONCTION USEFONCTION
+%type <NODE_TYPE> PROGRAM INSTRUCTION COLOR BACKGROUNDTYPE FORM
+%type <val> EXPRESSION VALUE TERM FACTOR HEXA
+%type <text> TEXT NAME
 
 
 %%
@@ -35,7 +39,7 @@ START : begin PROGRAM end
 {   
     printf("\nBEGIN\n");
     racine = $2;
-    racine=Add_Node(Create_Node(END_TOKEN,0,NULL),racine);
+    racine=Add_Node(Create_Node(END_TOKEN,0,NULL,NULL,0,0),racine);
     YYACCEPT;
 }
 
@@ -50,43 +54,55 @@ PROGRAM : INSTRUCTION
 
 INSTRUCTION : FORWARD EXPRESSION
 {
-    $$ = Create_Node(FORWARD_TOKEN, $2, NULL);
+    $$ = Create_Node(FORWARD_TOKEN, $2,NULL, NULL,0,0);
 }
 | LEFT EXPRESSION
 {
-    $$= Create_Node(LEFT_TOKEN, $2, NULL);
+    $$= Create_Node(LEFT_TOKEN, $2,NULL, NULL,0,0);
 }
 | RIGHT EXPRESSION
 {
-    $$ = Create_Node(RIGHT_TOKEN, $2, NULL);
+    $$ = Create_Node(RIGHT_TOKEN, $2,NULL, NULL,0,0);
 }
 | THICKNESS EXPRESSION
 {
-    $$=Create_Node(THICKNESS_TOKEN,$2,NULL);
+    $$=Create_Node(THICKNESS_TOKEN,$2,NULL,NULL,0,0);
 }
 | REPEAT EXPRESSION '[' PROGRAM ']'
 {
-    NODE *rpt = Create_Node(REPEAT_TOKEN, $2, NULL);
+    NODE *rpt = Create_Node(REPEAT_TOKEN, $2,NULL, NULL,0,0);
     $$ = Add_Program_Node($4, rpt);
 }
 
-| DEFFONCTION EXPRESSION '[' PROGRAM ']'
+| DEFFONCTION NAME'('')'  '[' PROGRAM ']'
 {
-    NODE *fct = Create_Node(DEFFONCTION_TOKEN, $2, NULL);
-    $$ = Add_Program_Node($4, fct);
+    NODE *fct = Create_Node(DEFFONCTION_TOKEN, 0,$2, NULL,0,0);
+    $$ = Add_Program_Node($6, fct);
 }
-| BACKGROUND '[' COLOR ']'
+| BACKGROUND '[' BACKGROUNDTYPE ']'
 {
-    $$=Create_Node(BACKGROUND_TOKEN,0,$3);
+    $$=Create_Node(BACKGROUND_TOKEN,0,NULL,$3,0,0);
+}
+| WRITE '(' TEXT ',' EXPRESSION ')'
+{
+    $$=Create_Node(WRITE_TOKEN,$5,$3,NULL,0,0);
+}
+| ICON '('TEXT ',' EXPRESSION')'
+{
+    $$=Create_Node(ICON_TOKEN,$5,$3,NULL,0,0);
+}
+|FORM
+{
+ $$=$1;
 }
 | COLOR
 {
     $$=$1;
 }
 
-| USEFONCTION EXPRESSION
+| USEFONCTION NAME'('')'
 {
-    $$ = Create_Node(USEFONCTION_TOKEN, $2, NULL);
+    $$ = Create_Node(USEFONCTION_TOKEN, 0,$2, NULL,0,0);
 }
 
 | %empty
@@ -95,29 +111,55 @@ INSTRUCTION : FORWARD EXPRESSION
     printf("\n");
 }
 
+FORM : CIRCLE '('COLOR','EXPRESSION')'
+{
+    $$=Create_Node(CIRCLE_TOKEN,$5,NULL,$3,0,0);
+}
+| RECT '('COLOR','EXPRESSION','EXPRESSION')'
+{
+  $$=Create_Node(RECT_TOKEN,0,NULL,$3,$5,$7);
+}
+| ELLIPSE '('COLOR ',' EXPRESSION',' EXPRESSION')'
+{
+    $$=Create_Node(ELLIPSE_TOKEN,0,NULL,$3,$5,$7);
+}
+
+BACKGROUNDTYPE: COLOR
+{
+    $$=$1;
+}
+| URL TEXT
+{
+    $$=Create_Node(URL_TOKEN,0,$2,NULL,0,0);
+}
+
 COLOR: RED
 {
-    $$ = Create_Node(RED_TOKEN, 0, NULL);
+    $$ = Create_Node(RED_TOKEN, 0,NULL, NULL,0,0);
 }
 | GREEN
 {
-    $$ = Create_Node(GREEN_TOKEN, 0, NULL);
+    $$ = Create_Node(GREEN_TOKEN, 0,NULL, NULL,0,0);
+}
+| YELLOW
+{
+    $$=Create_Node(YELLOW_TOKEN, 0,NULL, NULL,0,0);
 }
 | BLUE
 {
-    $$ = Create_Node(BLUE_TOKEN, 0, NULL);
+    $$ = Create_Node(BLUE_TOKEN, 0,NULL, NULL,0,0);
 }
 | TRANSPARENT
 {
-    $$ = Create_Node(TRANSPARENT_TOKEN, 0, NULL);
+    $$ = Create_Node(TRANSPARENT_TOKEN, 0,NULL, NULL,0,0);
 }
 | BLACK
 {
-    $$ = Create_Node(BLACK_TOKEN, 0, NULL);
+    $$ = Create_Node(BLACK_TOKEN, 0,NULL, NULL,0,0);
 }
 | DEFINECOLOR HEXA
 {
-    $$ = Create_Node(DEFINECOLOR_TOKEN, $2, NULL);
+    $$ = Create_Node(DEFINECOLOR_TOKEN, $2,NULL, NULL,0,0);
 }
 
 EXPRESSION : EXPRESSION '+' TERM
