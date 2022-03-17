@@ -455,7 +455,7 @@ void Draw_Circle(FILE *file,int rayon ,NODE* start)
 							formcolor = 4;
 							break;
 						case YELLOW_TOKEN:
-						    formcolor = 4;
+						    formcolor = 5 ;
 							break;
 						case DEFINECOLOR_TOKEN:
 							formcolor = tmp->program->value;

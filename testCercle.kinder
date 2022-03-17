@@ -1,0 +1,14 @@
+begin 
+BACKGROUND [ URL "./lib/back.png" ]
+
+DEFINE FONCTION  _myfctC() [
+    DEFINE COLOR 0x2ee
+    FORWARD 350
+    RIGHT 90
+    FORWARD 60
+    RECT (GREEN,60,80)
+    ]
+USE FONCTION _myfctC()
+FORWARD 400
+
+end
